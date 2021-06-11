@@ -1,20 +1,19 @@
 package me.ender.core.ability;
 
 
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.inject.Inject;
 
+import io.papermc.paper.enchantments.EnchantmentRarity;
 import me.ender.core.Core;
 import me.ender.core.CustomEnchant;
 import net.kyori.adventure.text.Component;
 import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Monster;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
@@ -23,6 +22,7 @@ import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class NecromancerAbility extends CustomEnchant implements Listener {
     private CooldownManager cooldowns;
-    private final long defaultCooldown = 5; //600; //get from config
+    private final long defaultCooldown = 5; //600; //get from config in seconds
 
     public static NecromancerAbility INSTANCE; //wish it could be final
 
@@ -88,6 +88,32 @@ public class NecromancerAbility extends CustomEnchant implements Listener {
     public @NotNull Component displayName(int level) {
         return Component.text(ChatColor.GRAY + name);
     }
+
+    @Override
+    public boolean isTradeable() {
+        return false;
+    }
+
+    @Override
+    public boolean isDiscoverable() {
+        return false;
+    }
+
+    @Override
+    public @NotNull EnchantmentRarity getRarity() {
+        return null;
+    }
+
+    @Override
+    public float getDamageIncrease(int i, @NotNull EntityCategory entityCategory) {
+        return 0;
+    }
+
+    @Override
+    public @NotNull Set<EquipmentSlot> getActiveSlots() {
+        return null;
+    }
+
     //endregion
     @EventHandler
     public void onItemHeld(PlayerItemHeldEvent e) {
@@ -123,8 +149,8 @@ public class NecromancerAbility extends CustomEnchant implements Listener {
                 var world  =e.getEntity().getWorld();
                 var loc = e.getEntity().getLocation().add(1, 0, 0);
                 for(int i =0; i<num; i++) {
-                    p.sendMessage("help");
-                    var entity = (Monster)world.spawnEntity(loc, EntityType.ZOMBIE);
+
+                    var entity = (Monster)world.spawnEntity(loc, num % 3 ==0 ? EntityType.SKELETON : EntityType.ZOMBIE);
                     entity.setTarget(t);
                 }
                 cooldowns.setCooldown(p.getUniqueId(), time);

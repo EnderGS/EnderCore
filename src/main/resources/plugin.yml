@@ -4,18 +4,11 @@ description: Test
 version: 0.0.2
 author: EnderGS
 api-version: 1.16
+#softdepend: [ProtocolLib]
 commands:
   ecore:
     description: A great command
     permission: ender.core.ecore
-  enchant:
-    description: Unsafe enchants
-    permission: ender.core.enchant
-  espawn:
-    description: hello
-  home:
-    description: Go home
-    permission: ender.core.home
   ecustom:
     description: Custom object
 permissions:

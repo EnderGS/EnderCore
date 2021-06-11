@@ -3,11 +3,13 @@ package me.ender.core.commands;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import me.ender.core.Core;
+import me.ender.core.CustomEnchant;
 import me.ender.core.CustomItem;
 import me.ender.core.Util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -46,6 +48,8 @@ public class ECustom implements CommandExecutor {
                 }
                 //do the thing;
                 return true;
+            case "enchant":
+                return enchantItem(commandSender, strings);
             case "create": {
                 return createItem(commandSender, strings);
             }
@@ -85,6 +89,14 @@ public class ECustom implements CommandExecutor {
                 return false;
         }
         return false;
+    }
+
+    private boolean enchantItem(CommandSender commandSender, String[] strings) {
+        if(!Util.isPlayer(commandSender)) return false;
+        var p = (Player)commandSender;
+        var item = p.getInventory().getItemInMainHand();
+        CustomEnchant.enchantItem(item, Enchantment.getByKey(NamespacedKey.fromString(strings[1], plugin)), 1);
+        return true;
     }
 
     private boolean giveItem(@NotNull CommandSender commandSender, @NotNull String @NotNull [] strings) {

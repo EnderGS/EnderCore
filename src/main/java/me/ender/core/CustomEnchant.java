@@ -34,9 +34,10 @@ public abstract class CustomEnchant extends Enchantment {
         return container.has(enchant.key, PersistentDataType.STRING);
     }
 
-    public static void enchantItem(ItemStack item, CustomEnchant enchant, int level) {
+    public static void enchantItem(ItemStack item, Enchantment enchant, int level) {
         item.addUnsafeEnchantment(enchant, level);
-        addLore(item, enchant.lore); //right now only support level I
+        if(enchant instanceof CustomEnchant)
+        addLore(item, ((CustomEnchant)enchant).lore); //right now only support level I
     }
     public static void addLore(ItemStack item, Component lore) {
         var l = item.lore();

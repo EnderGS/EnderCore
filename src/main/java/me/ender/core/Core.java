@@ -6,9 +6,12 @@ import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import me.ender.core.ability.FrostbiteAbility;
 import me.ender.core.ability.NecromancerAbility;
+import me.ender.core.ability.SharpAbility;
+import me.ender.core.ability.VanishAbility;
 import me.ender.core.commands.*;
 import me.ender.core.events.DamageEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentWrapper;
 import org.bukkit.event.Listener;
@@ -25,11 +28,11 @@ import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
-@Singleton
 public class Core extends JavaPlugin {
     public HashMap<String,CustomItem> customItems;
 
     public Path customItemPath;
+    public FileConfiguration config;
     private Injector injector;
 
     @Inject private Home home;
@@ -39,9 +42,14 @@ public class Core extends JavaPlugin {
     @Inject private DamageEvent DamageEvent;
     @Inject private NecromancerAbility necromancerAbility;
     @Inject private FrostbiteAbility frostbiteAbility;
+    @Inject private VanishAbility vanishAbility;
+    @Inject private SharpAbility sharpAbility;
 
     @Override
     public void onEnable() {
+        if(!Files.exists(this.getDataFolder().toPath().resolve("config.yml")))
+            this.saveResource("config.yml", false);
+        config = this.getConfig();
         setupCustomItems();
         Binder module = new Binder(this);
         injector = module.createInjector();
@@ -49,15 +57,16 @@ public class Core extends JavaPlugin {
         injector.injectMembers(this.getConfig());
         var ecore = getCommand("ecore");
         ecore.setExecutor(new ECore());
-        var enchant = getCommand("enchant");
-        enchant.setExecutor(cEnchant);
-        getCommand("espawn").setExecutor(new Spawn());
-        getCommand("home").setExecutor(this.home);
-        getCommand("ecustom").setExecutor(this.eCustom);
+        getCommand("ecustom").setExecutor(this.cEnchant);
+        registerEvents();
+        register();
+    }
+    private void registerEvents() {
         Bukkit.getPluginManager().registerEvents(this.necromancerAbility, this);
         Bukkit.getPluginManager().registerEvents(this.frostbiteAbility, this);
-        Bukkit.getPluginManager().registerEvents(this.DamageEvent, this);
-        register();
+        //Bukkit.getPluginManager().registerEvents(this.DamageEvent, this);
+        Bukkit.getPluginManager().registerEvents(this.vanishAbility, this);
+        Bukkit.getPluginManager().registerEvents(this.sharpAbility, this);
     }
     public void register() {
         try {
@@ -66,6 +75,8 @@ public class Core extends JavaPlugin {
             f.set(null, true);
             EnchantmentWrapper.registerEnchantment(frostbiteAbility);
             EnchantmentWrapper.registerEnchantment(necromancerAbility);
+            EnchantmentWrapper.registerEnchantment(vanishAbility);
+            EnchantmentWrapper.registerEnchantment(sharpAbility);
         } catch (Exception e) {
             e.printStackTrace();
         }

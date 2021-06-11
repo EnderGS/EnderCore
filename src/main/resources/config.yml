@@ -1,1 +1,9 @@
 spawn-mobs: true
+abilities:
+  frostbite:
+    cooldown: 600
+  necromancer:
+    cooldown: 600
+  vanish:
+    cooldown: 600
+    length: 30
