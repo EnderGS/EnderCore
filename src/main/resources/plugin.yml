@@ -1,0 +1,29 @@
+main: me.ender.core.Core
+name: EnderCore
+description: Test
+version: 0.0.2
+author: EnderGS
+api-version: 1.16
+commands:
+  ecore:
+    description: A great command
+    permission: ender.core.ecore
+  enchant:
+    description: Unsafe enchants
+    permission: ender.core.enchant
+  espawn:
+    description: hello
+  home:
+    description: Go home
+    permission: ender.core.home
+  ecustom:
+    description: Custom object
+permissions:
+  ender.core.*:
+    description: All
+  ender.core.ecore:
+    description: IDK
+  ender.core.enchant:
+    description: Hello
+    children:
+      ender.core.enchant.unsafe: false
