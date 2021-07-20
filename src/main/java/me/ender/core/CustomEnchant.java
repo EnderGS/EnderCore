@@ -39,6 +39,13 @@ public abstract class CustomEnchant extends Enchantment {
         if(enchant instanceof CustomEnchant)
         addLore(item, ((CustomEnchant)enchant).lore); //right now only support level I
     }
+
+    public static void enchantItem(ItemStack item, NamespacedKey name, int level) {
+        var enchant = Enchantment.getByKey(name);
+        item.addUnsafeEnchantment(enchant, level);
+        addLore(item, ((CustomEnchant)enchant).lore); //right now only support level I
+    }
+
     public static void addLore(ItemStack item, Component lore) {
         var l = item.lore();
         if (l == null) {

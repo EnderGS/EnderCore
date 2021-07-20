@@ -113,6 +113,7 @@ public class VanishAbility extends CustomEnchant implements Listener {
         if(!(e.getPlayer() instanceof Player)) return;
         if(!e.isSneaking()) return;
         var p = e.getPlayer();
+        if(p.getInventory().getChestplate() == null) return;
         if(p.getInventory().getChestplate().containsEnchantment(INSTANCE)) {
             var time =System.currentTimeMillis();
             var timeLeft=  time - cooldowns.getCooldown(p.getUniqueId());

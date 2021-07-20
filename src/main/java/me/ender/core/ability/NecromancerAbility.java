@@ -118,6 +118,7 @@ public class NecromancerAbility extends CustomEnchant implements Listener {
     @EventHandler
     public void onItemHeld(PlayerItemHeldEvent e) {
         var p = e.getPlayer();
+
         var item = p.getInventory().getItem(e.getNewSlot());
         if(item != null && item.containsEnchantment(INSTANCE) ||
         p.getInventory().getItemInOffHand().containsEnchantment(INSTANCE)) {
@@ -169,23 +170,23 @@ public class NecromancerAbility extends CustomEnchant implements Listener {
             e.setCancelled(true); //cancel the target 
         }
     }
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent event) {
-        Player p = event.getPlayer();
-        if (!(event.getAction() == Action.RIGHT_CLICK_AIR)) return;
-        //check cooldown of item;
-        var item = p.getInventory().getItemInMainHand();
-        if(item.containsEnchantment(INSTANCE)) {
-            var timeLeft= System.currentTimeMillis() - cooldowns.getCooldown(p.getUniqueId());
-            if (TimeUnit.MILLISECONDS.toSeconds(timeLeft) >= defaultCooldown) {
-                //ready to use
-                cooldowns.setCooldown(p.getUniqueId(), System.currentTimeMillis());
-            } else {
-                p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "seconds before you can use this feature again.");
-            }
-
-        }
-    }
+//    @EventHandler
+//    public void onPlayerInteract(PlayerInteractEvent event) {
+//        Player p = event.getPlayer();
+//        if (!(event.getAction() == Action.RIGHT_CLICK_AIR)) return;
+//        //check cooldown of item;
+//        var item = p.getInventory().getItemInMainHand();
+//        if(item.containsEnchantment(INSTANCE)) {
+//            var timeLeft= System.currentTimeMillis() - cooldowns.getCooldown(p.getUniqueId());
+//            if (TimeUnit.MILLISECONDS.toSeconds(timeLeft) >= defaultCooldown) {
+//                //ready to use
+//                cooldowns.setCooldown(p.getUniqueId(), System.currentTimeMillis());
+//            } else {
+//                p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "seconds before you can use this feature again.");
+//            }
+//
+//        }
+//    }
 
     
     @EventHandler

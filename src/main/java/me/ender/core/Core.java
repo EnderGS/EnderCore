@@ -4,10 +4,7 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Singleton;
-import me.ender.core.ability.FrostbiteAbility;
-import me.ender.core.ability.NecromancerAbility;
-import me.ender.core.ability.SharpAbility;
-import me.ender.core.ability.VanishAbility;
+import me.ender.core.ability.*;
 import me.ender.core.commands.*;
 import me.ender.core.events.DamageEvent;
 import org.bukkit.Bukkit;
@@ -39,11 +36,12 @@ public class Core extends JavaPlugin {
     @Inject private ECustom eCustom;
     @Inject private Enchant cEnchant;
 
-    @Inject private DamageEvent DamageEvent;
+    //@Inject private DamageEvent DamageEvent;
     @Inject private NecromancerAbility necromancerAbility;
     @Inject private FrostbiteAbility frostbiteAbility;
     @Inject private VanishAbility vanishAbility;
     @Inject private SharpAbility sharpAbility;
+    @Inject private ExecutionerAbility executionerAbility;
 
     @Override
     public void onEnable() {
@@ -58,6 +56,7 @@ public class Core extends JavaPlugin {
         var ecore = getCommand("ecore");
         ecore.setExecutor(new ECore());
         getCommand("ecustom").setExecutor(this.cEnchant);
+        ecore.setTabCompleter(this.cEnchant);
         registerEvents();
         register();
     }
@@ -67,6 +66,7 @@ public class Core extends JavaPlugin {
         //Bukkit.getPluginManager().registerEvents(this.DamageEvent, this);
         Bukkit.getPluginManager().registerEvents(this.vanishAbility, this);
         Bukkit.getPluginManager().registerEvents(this.sharpAbility, this);
+        Bukkit.getPluginManager().registerEvents(this.executionerAbility, this);
     }
     public void register() {
         try {
@@ -77,6 +77,7 @@ public class Core extends JavaPlugin {
             EnchantmentWrapper.registerEnchantment(necromancerAbility);
             EnchantmentWrapper.registerEnchantment(vanishAbility);
             EnchantmentWrapper.registerEnchantment(sharpAbility);
+            EnchantmentWrapper.registerEnchantment(executionerAbility);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -112,6 +113,6 @@ public class Core extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        getLogger().info("FUCK");
+        getLogger().info("Disabling");
     }
 }
