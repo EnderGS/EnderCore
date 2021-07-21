@@ -11,14 +11,22 @@ commands:
     permission: ender.core.ecore
   ecustom:
     description: Custom object
+    permission: ender.core.ecustom
   eenchant:
     description: Custom enchants
+    permission: ender.core.eenchant
 permissions:
   ender.core.*:
     description: All
+    children:
+      ender.core.ecore: true
+      ender.core.enchant: true
+      ender.core.ecustom: true
   ender.core.ecore:
     description: IDK
   ender.core.enchant:
     description: Hello
-    children:
-      ender.core.enchant.unsafe: false
+  ender.core.ecusom:
+    description: The goto for custom items
+  ender.core.nocooldown:
+    description: Avoids cooldown for abilities;

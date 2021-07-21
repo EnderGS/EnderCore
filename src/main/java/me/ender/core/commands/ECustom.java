@@ -39,24 +39,32 @@ public class ECustom extends ECommand implements Listener {
         COMMANDS2 = new HashSet<>();
 
     }
-
+    //make it so that you can combine
     @Override
     public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
         if(!Util.isPlayer(commandSender)) return false;
         var p = (Player)commandSender;
+        if(strings.length != 2) {
+            p.sendMessage("Not enough arguments");
+            return false;
+        }
         switch(strings[0]) {
             case "save": {
-                var name = strings[1];
-                var item = p.getInventory().getItemInMainHand();
-                var meta = item.getItemMeta();
-                meta.getPersistentDataContainer().set(itemName, PersistentDataType.STRING, name);
-                item.setItemMeta(meta);
-                var view = p.openWorkbench(null, true);
-                queue.put(view, item);
-            } break;
+                    var name = strings[1];
+                    var item = p.getInventory().getItemInMainHand();
+                    if(item.getType().isAir()) {
+                        p.sendMessage("Air can not be a custom item");
+                        return false;
+                    }
+                    var meta = item.getItemMeta();
+                    meta.getPersistentDataContainer().set(itemName, PersistentDataType.STRING, name);
+                    item.setItemMeta(meta);
+                    var view = p.openWorkbench(null, true);
+                    queue.put(view, item);
+                } break;
             case "recipe": {
                 var name = strings[1];
-                var file = plugin.loadConfig(plugin.customItemPath + name, false);
+                var file = plugin.loadConfig(plugin.customItemPath+"/" + name, false);
                 if(file == null) {
                     p.sendMessage("The specified item does not exist");
                     return false;
@@ -67,7 +75,7 @@ public class ECustom extends ECommand implements Listener {
             } break;
             case "give": {
                 var name = strings[1];
-                var file = plugin.loadConfig(plugin.customItemPath + name, false);
+                var file = plugin.loadConfig(plugin.customItemPath +"/" + name, false);
                 if(file == null) {
                     p.sendMessage("The specified item does not exist");
                     return false;
@@ -81,8 +89,9 @@ public class ECustom extends ECommand implements Listener {
     }
     @EventHandler
     public void onClose(InventoryCloseEvent e) {
-        var item = queue.get(e.getView());
+        var item = queue.get(e.getView()); //this should only trigger for the exact instance of the getView()
         if (item == null) return;
+        //the name of the custom item is stored in the custom data
         var name =item.getItemMeta().getPersistentDataContainer().get(itemName, PersistentDataType.STRING);
         var key = new NamespacedKey(plugin, name);
         //remove recipe because it is re registering,

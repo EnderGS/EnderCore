@@ -1,12 +1,13 @@
 package me.ender.core.ability;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class CooldownManager {
-    private Map<UUID, Long> cooldowns;
+    public static final Set<UUID> Exempt = new HashSet<>();
+    private Map<UUID, Long> cooldowns; //or could use a Map<UUID, Map<AbilityEnum, Long>
     public void setCooldown(UUID player, Long time) {
+        if(Exempt.contains(player))
+            return;
         if (time == null)
             cooldowns.remove(player);
         else
@@ -14,7 +15,10 @@ public class CooldownManager {
     }
 
     public long getCooldown(UUID player) {
-        return (cooldowns.get(player) == null ? 0L : cooldowns.get(player));
+        if(Exempt.contains(player))
+            Exempt.remove(player);
+        var p = cooldowns.get(player);
+        return (p == null ? 0L : p);
     }
 
     public CooldownManager() {

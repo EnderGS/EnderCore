@@ -1,7 +1,7 @@
 spawn-mobs: true
 abilities:
   frostbite:
-    cooldown: 600
+    duration: 5
   necromancer:
     cooldown: 600
   vanish:

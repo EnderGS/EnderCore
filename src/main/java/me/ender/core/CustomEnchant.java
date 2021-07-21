@@ -130,7 +130,9 @@ public abstract class CustomEnchant extends Enchantment {
             item.lore(List.of(lore));
         } else {
             //add to the top of the lore
-            item.lore().add(0, lore);
+            var lo =item.lore();
+            lo.add(0, lore);
+            item.lore(lo);
         }
         //do i need to redo the lore?
     }

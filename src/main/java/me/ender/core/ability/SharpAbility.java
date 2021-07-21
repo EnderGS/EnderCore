@@ -38,6 +38,7 @@ public class SharpAbility extends CustomEnchant implements Listener {
         if(!(e.getEntity() instanceof LivingEntity)) return;
         var p = (Player)e.getDamager();
         if(!p.getInventory().getItemInMainHand().containsEnchantment(INSTANCE)) return;
+        int level = p.getInventory().getItemInMainHand().getEnchantmentLevel(INSTANCE); //what to do;
         var le = (LivingEntity)e.getEntity();
         e.setDamage(0.0);
         le.setHealth(Math.max(0,le.getHealth()-6));

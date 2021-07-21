@@ -13,10 +13,13 @@ import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityTargetLivingEntityEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffectType;
 
 import net.md_5.bungee.api.ChatColor;
@@ -34,23 +37,23 @@ public class NecromancerAbility extends CustomEnchant implements Listener, IRese
         this.cooldown = plugin.getConfig().getLong("abilities.necromancer.cooldown");
         INSTANCE = this;
     }
-    @EventHandler
-    public void onItemHeld(PlayerItemHeldEvent e) {
-        var p = e.getPlayer();
-
-        var item = p.getInventory().getItem(e.getNewSlot());
-        if(item != null && item.containsEnchantment(INSTANCE) ||
-        p.getInventory().getItemInOffHand().containsEnchantment(INSTANCE)) {
-            p.addPotionEffect(PotionEffectType.SLOW.createEffect(Integer.MAX_VALUE, 0));
-        } else {
-            //get previous item and see if it was staff
-            var i = p.getInventory().getItem(e.getPreviousSlot());
-            if(i != null && i.containsEnchantment(INSTANCE)) {
-                p.removePotionEffect(PotionEffectType.SLOW);
-                //bug because will remove normal slow effect
-            }
-        }
-    }
+//    @EventHandler
+//    public void onItemHeld(PlayerItemHeldEvent e) {
+//        var p = e.getPlayer();
+//
+//        var item = p.getInventory().getItem(e.getNewSlot());
+//        if(item != null && item.containsEnchantment(INSTANCE) ||
+//        p.getInventory().getItemInOffHand().containsEnchantment(INSTANCE)) {
+//            p.addPotionEffect(PotionEffectType.SLOW.createEffect(Integer.MAX_VALUE, 0));
+//        } else {
+//            //get previous item and see if it was staff
+//            var i = p.getInventory().getItem(e.getPreviousSlot());
+//            if(i != null && i.containsEnchantment(INSTANCE)) {
+//                p.removePotionEffect(PotionEffectType.SLOW);
+//                //bug because will remove normal slow effect
+//            }
+//        }
+//    }
 
     @EventHandler 
     public void onPlayerDamage(EntityDamageByEntityEvent e) {
@@ -58,26 +61,23 @@ public class NecromancerAbility extends CustomEnchant implements Listener, IRese
         if(!(e.getEntity() instanceof LivingEntity)) return;
         var p = (Player)e.getDamager();
         var t = (LivingEntity) e.getEntity();
-        if(p.getInventory().getItemInMainHand().containsEnchantment(INSTANCE) ||
-        p.getInventory().getItemInOffHand().containsEnchantment(INSTANCE)) {
-
+        ItemStack item = null;
+        if(p.getInventory().getItemInMainHand().containsEnchantment(INSTANCE)) item = p.getInventory().getItemInMainHand();
+        else if(p.getInventory().getItemInOffHand().containsEnchantment(INSTANCE)) item = p.getInventory().getItemInOffHand();
+        else return;
+        var numMobs = item.getEnchantmentLevel(INSTANCE);
             var time =System.currentTimeMillis();
             var timeLeft=  time - cooldowns.getCooldown(p.getUniqueId());
             if (TimeUnit.MILLISECONDS.toSeconds(timeLeft) >= cooldown) {
-                p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "used");
-                var num = RandomUtils.nextInt(4) + 1; //not sure if fast
                 var world  =e.getEntity().getWorld();
                 var loc = e.getEntity().getLocation().add(1, 0, 0);
-                for(int i =0; i<num; i++) {
-
-                    var entity = (Monster)world.spawnEntity(loc, num % 3 ==0 ? EntityType.SKELETON : EntityType.ZOMBIE);
+                for(int i =0; i<numMobs; i++) {
+                    var type = System.currentTimeMillis() %2 ==0 ? EntityType.SKELETON : EntityType.ZOMBIE;
+                    var entity = (Monster)world.spawnEntity(loc, type);
                     entity.setTarget(t);
                 }
                 cooldowns.setCooldown(p.getUniqueId(), time);
-            } else {
-                p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "seconds before you can use this feature again.");
             }
-        }
     }
     @EventHandler 
     public void onEntityTarget(EntityTargetLivingEntityEvent e) {
@@ -89,23 +89,22 @@ public class NecromancerAbility extends CustomEnchant implements Listener, IRese
             e.setCancelled(true); //cancel the target 
         }
     }
-//    @EventHandler
-//    public void onPlayerInteract(PlayerInteractEvent event) {
-//        Player p = event.getPlayer();
-//        if (!(event.getAction() == Action.RIGHT_CLICK_AIR)) return;
-//        //check cooldown of item;
-//        var item = p.getInventory().getItemInMainHand();
-//        if(item.containsEnchantment(INSTANCE)) {
-//            var timeLeft= System.currentTimeMillis() - cooldowns.getCooldown(p.getUniqueId());
-//            if (TimeUnit.MILLISECONDS.toSeconds(timeLeft) >= defaultCooldown) {
-//                //ready to use
-//                cooldowns.setCooldown(p.getUniqueId(), System.currentTimeMillis());
-//            } else {
-//                p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "seconds before you can use this feature again.");
-//            }
-//
-//        }
-//    }
+    @EventHandler
+    public void onPlayerInteract(PlayerInteractEvent event) {
+        Player p = event.getPlayer();
+        if(!p.isSneaking()) return;
+        if (!(event.getAction() == Action.RIGHT_CLICK_AIR)) return;
+        //check cooldown of item;
+        var item = p.getInventory().getItemInMainHand();
+        if(item.containsEnchantment(INSTANCE)) {
+            var timeLeft= System.currentTimeMillis() - cooldowns.getCooldown(p.getUniqueId());
+                var seconds = (cooldown -TimeUnit.MILLISECONDS.toSeconds(timeLeft));
+                if(seconds > 0)
+                    p.sendMessage(ChatColor.RED.toString() + seconds + "seconds before you can use this feature again.");
+                else
+                    p.sendMessage(ChatColor.GREEN + "Ability ready to use again");
+            }
+        }
 
     
     @EventHandler

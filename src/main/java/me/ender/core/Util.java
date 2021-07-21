@@ -21,4 +21,8 @@ public class Util {
         }
         return true;
     }
+    //only temp
+    public static boolean isOp(CommandSender sender) {
+        return sender.isOp();
+    }
 }
