@@ -42,6 +42,7 @@ public class SharpAbility extends CustomEnchant implements Listener {
         var le = (LivingEntity)e.getEntity();
         e.setDamage(0.0);
         le.setHealth(Math.max(0,le.getHealth()-6));
+        le.setKiller(p);
 
     }
 }

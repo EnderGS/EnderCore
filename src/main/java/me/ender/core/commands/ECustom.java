@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -84,6 +85,21 @@ public class ECustom extends ECommand implements Listener {
 
                 p.getInventory().addItem(item);
             } break;
+
+            case "delete": {
+                var name = strings[1];
+                try {
+                    if(Files.deleteIfExists(Path.of(plugin.customItemPath +"/" + name))) {
+                        p.sendMessage(name + " deleted successfully");
+                        COMMANDS2.remove(name);
+                    }
+                    else {
+                        p.sendMessage(name + " not found");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return true;
     }
