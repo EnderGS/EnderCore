@@ -19,14 +19,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class Enchant implements CommandExecutor, TabCompleter {
+public class Enchant extends ECommand {
 
-    private final Core plugin;
     public final List<String> enchants = List.of("executioner", "frostbite", "necromancer", "sharp", "vanish");
 
     @Inject
     public Enchant(Core plugin) {
-        this.plugin = plugin;
+        super(plugin, "eenchant");
     }
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {

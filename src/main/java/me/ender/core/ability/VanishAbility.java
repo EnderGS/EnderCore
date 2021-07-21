@@ -4,15 +4,15 @@ import com.google.inject.Inject;
 import io.papermc.paper.enchantments.EnchantmentRarity;
 import me.ender.core.Core;
 import me.ender.core.CustomEnchant;
+import me.ender.core.IResettable;
+import me.ender.core.events.PluginReloadEvent;
 import net.kyori.adventure.text.Component;
 import net.md_5.bungee.api.ChatColor;
-import org.apache.commons.lang.math.RandomUtils;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentTarget;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ import org.bukkit.event.player.PlayerToggleSneakEvent;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-public class VanishAbility extends CustomEnchant implements Listener {
+public class VanishAbility extends CustomEnchant implements Listener, IResettable {
     private CooldownManager cooldowns;
     private long defaultCooldown = 5; //600; //get from config
     private int defaultLength;
@@ -130,5 +130,12 @@ public class VanishAbility extends CustomEnchant implements Listener {
                 p.sendMessage(ChatColor.RED.toString() + TimeUnit.MILLISECONDS.toSeconds(timeLeft) + "seconds before you can use this feature again.");
             }
         }
+    }
+
+    @Override
+    @EventHandler
+    public void onReset(PluginReloadEvent e) {
+        this.defaultCooldown = plugin.config.getInt("abilities.vanish.cooldown");
+        this.defaultLength = plugin.config.getInt("abilities.vanish.length");
     }
 }

@@ -3,7 +3,7 @@ name: EnderCore
 description: Test
 version: 0.0.2
 author: EnderGS
-api-version: 1.16
+api-version: 1.17
 #softdepend: [ProtocolLib]
 commands:
   ecore:
@@ -11,6 +11,8 @@ commands:
     permission: ender.core.ecore
   ecustom:
     description: Custom object
+  eenchant:
+    description: Custom enchants
 permissions:
   ender.core.*:
     description: All

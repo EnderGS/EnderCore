@@ -1,19 +1,25 @@
 package me.ender.core;
 
 import java.util.List;
+import java.util.Set;
 
 import javax.management.timer.Timer;
 
 import com.google.inject.Inject;
 
+import io.papermc.paper.enchantments.EnchantmentRarity;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.enchantments.EnchantmentTarget;
+import org.bukkit.entity.EntityCategory;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
 import net.kyori.adventure.text.Component;
 import net.md_5.bungee.api.ChatColor;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CustomEnchant extends Enchantment {
     //need a class and a manager
@@ -29,6 +35,78 @@ public abstract class CustomEnchant extends Enchantment {
         this.name = name;
         this.lore = Component.text(ChatColor.GRAY + this.name + " I"); //no level displayed, secret level
     }
+//region bloat
+    @Override
+    public @NotNull String getName() {
+        return name;
+    }
+
+    @Override
+    public @NotNull Set<EquipmentSlot> getActiveSlots() {
+        return null;
+    }
+
+    @Override
+    public boolean conflictsWith(@NotNull Enchantment enchantment) {
+        return false;
+    }
+
+    @Override
+    public boolean canEnchantItem(@NotNull ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public @NotNull Component displayName(int i) {
+        return null;
+    }
+
+    @Override
+    public boolean isTradeable() {
+        return false;
+    }
+
+    @Override
+    public boolean isDiscoverable() {
+        return false;
+    }
+
+    @Override
+    public @NotNull EnchantmentRarity getRarity() {
+        return null;
+    }
+
+    @Override
+    public float getDamageIncrease(int i, @NotNull EntityCategory entityCategory) {
+        return 0;
+    }
+
+    @Override
+    public int getMaxLevel() {
+        return 0;
+    }
+
+    @Override
+    public int getStartLevel() {
+        return 0;
+    }
+
+    @Override
+    public @NotNull EnchantmentTarget getItemTarget() {
+        return null;
+    }
+
+    @Override
+    public boolean isTreasure() {
+        return false;
+    }
+
+    @Override
+    public boolean isCursed() {
+        return false;
+    }
+
+    //endregion
     public static boolean hasEnchant(ItemStack item, CustomEnchant enchant) {
         var container = item.getItemMeta().getPersistentDataContainer();
         return container.has(enchant.key, PersistentDataType.STRING);

@@ -8,33 +8,40 @@ import me.ender.core.ability.*;
 import me.ender.core.commands.*;
 import me.ender.core.events.DamageEvent;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentWrapper;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public class Core extends JavaPlugin {
     public HashMap<String,CustomItem> customItems;
 
-    public Path customItemPath;
+    public final String customItemPath = "plugins/EnderCore/custom-items";
     public FileConfiguration config;
     private Injector injector;
 
-    @Inject private Home home;
-    @Inject private ECustom eCustom;
     @Inject private Enchant cEnchant;
+    @Inject private ECore eCore;
+    @Inject private ECustom eCustom;
 
     //@Inject private DamageEvent DamageEvent;
     @Inject private NecromancerAbility necromancerAbility;
@@ -47,18 +54,18 @@ public class Core extends JavaPlugin {
     public void onEnable() {
         if(!Files.exists(this.getDataFolder().toPath().resolve("config.yml")))
             this.saveResource("config.yml", false);
+        FileConfiguration f = new YamlConfiguration();
+
         config = this.getConfig();
-        setupCustomItems();
+        //setupCustomItems();
         Binder module = new Binder(this);
         injector = module.createInjector();
         injector.injectMembers(this);
         injector.injectMembers(this.getConfig());
-        var ecore = getCommand("ecore");
-        ecore.setExecutor(new ECore());
-        getCommand("ecustom").setExecutor(this.cEnchant);
-        ecore.setTabCompleter(this.cEnchant);
+        //var ecore = getCommand("ecore");
         registerEvents();
         register();
+        registerCustomItems();
     }
     private void registerEvents() {
         Bukkit.getPluginManager().registerEvents(this.necromancerAbility, this);
@@ -67,6 +74,8 @@ public class Core extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(this.vanishAbility, this);
         Bukkit.getPluginManager().registerEvents(this.sharpAbility, this);
         Bukkit.getPluginManager().registerEvents(this.executionerAbility, this);
+
+        Bukkit.getPluginManager().registerEvents(this.eCustom, this);
     }
     public void register() {
         try {
@@ -83,32 +92,43 @@ public class Core extends JavaPlugin {
         }
     }
 
+    public void registerCustomItems() {
+        var file = new File(customItemPath);
+        for(var f : file.listFiles()) {
+            var yaml = loadConfig(f.getPath(), false);
+            var patterList = yaml.getStringList("pattern");
+            var pattern = new String[patterList.size()];
+            patterList.toArray(pattern);
 
-    private void setupCustomItems() {
-        customItems = new HashMap<>(); //convert to ItemStack
-        customItemPath = getDataFolder().toPath().resolve("custom-items");
-        try {
-            Gson gson = new Gson();
-            if (Files.notExists(customItemPath)) {
-                Files.createDirectories(customItemPath);
-            }
-            try (Stream<Path> paths = Files.walk(customItemPath)) {
-                paths
-                        .filter(Files::isRegularFile)
-                        .forEach(f -> {
-                            try {
-                                var parsed = gson.fromJson(new FileReader(f.toFile()), CustomItem.class);
-                                customItems.put(parsed.name, parsed);
-                            } catch (FileNotFoundException e) {
-                                getLogger().log(Level.SEVERE, "Failed to load {0}", f.toString());
-                                e.printStackTrace();
-                            }
-                        });
-            }
 
-        } catch (Exception e) {
-            getLogger().log(Level.SEVERE, "Failed to load custom items from json", e);
+            var sec = yaml.getConfigurationSection("map");
+            Map<String, ItemStack> map = (Map)sec.getValues(false);
+
+            var item = yaml.getItemStack("result");
+
+            var recipe = new ShapedRecipe(new NamespacedKey(this, f.getName()), item);
+            recipe.shape(pattern);
+            for(var entry : map.entrySet()) {
+                recipe.setIngredient(entry.getKey().charAt(0), entry.getValue());
+            }
+            Bukkit.addRecipe(recipe);
+            eCustom.COMMANDS2.add(f.getName());
         }
+    }
+
+    public FileConfiguration loadConfig(String path, boolean create) {
+        try {
+        var customConfigFile = new File(path);
+        if (!customConfigFile.exists() && create) {
+            customConfigFile.createNewFile();
+        }
+        var customConfig= new YamlConfiguration();
+            customConfig.load(customConfigFile);
+            return customConfig;
+        } catch (IOException | InvalidConfigurationException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override

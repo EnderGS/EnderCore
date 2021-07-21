@@ -1,237 +1,177 @@
 package me.ender.core.commands;
 
+import com.google.common.collect.Iterators;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import me.ender.core.Core;
-import me.ender.core.CustomEnchant;
-import me.ender.core.CustomItem;
 import me.ender.core.Util;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.inventory.ShapedRecipe;
+import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.FileWriter;
+import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.List;
+import java.nio.file.Path;
+import java.util.*;
 
-public class ECustom implements CommandExecutor {
-    private final Core plugin;
-
-    @Inject //maybe i should use a ICustomItemManager for file access
+public class ECustom extends ECommand implements Listener {
+    private final List<String> COMMANDS1 = List.of("save", "give", "recipe");
+    public Set<String> COMMANDS2;
+    private Map<InventoryView, ItemStack> queue;
+    private final NamespacedKey itemName = new NamespacedKey(plugin, "customName");
+    @Inject
     public ECustom(Core plugin) {
-        this.plugin = plugin;
+        super(plugin, "ecustom");
+        queue = new HashMap<>();
+        COMMANDS2 = new HashSet<>();
+
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
+        if(!Util.isPlayer(commandSender)) return false;
+        var p = (Player)commandSender;
+        switch(strings[0]) {
+            case "save": {
+                var name = strings[1];
+                var item = p.getInventory().getItemInMainHand();
+                var meta = item.getItemMeta();
+                meta.getPersistentDataContainer().set(itemName, PersistentDataType.STRING, name);
+                item.setItemMeta(meta);
+                var view = p.openWorkbench(null, true);
+                queue.put(view, item);
+            } break;
+            case "recipe": {
+                var name = strings[1];
+                var file = plugin.loadConfig("plugins/EnderCore/custom-items/" + name, false);
+                if(file == null) {
+                    p.sendMessage("The specified item does not exist");
+                    return false;
+                }
+                var item = file.getItemStack("result");
+                var view = p.openWorkbench(null, true);
+                queue.put(view, item);
+            } break;
+            case "give": {
+                var name = strings[1];
+                var file = plugin.loadConfig("plugins/EnderCore/custom-items/" + name, false);
+                if(file == null) {
+                    p.sendMessage("The specified item does not exist");
+                    return false;
+                }
+                var item = file.getItemStack("result");
+
+                p.getInventory().addItem(item);
+            } break;
+        }
+        return true;
+    }
+    @EventHandler
+    public void onClose(InventoryCloseEvent e) {
+        var item = queue.get(e.getView());
+        if (item == null) return;
+        var name =item.getItemMeta().getPersistentDataContainer().get(itemName, PersistentDataType.STRING);
+        var key = new NamespacedKey(plugin, name);
+        //remove recipe because it is re registering,
+        Bukkit.removeRecipe(key);
+        var p = (Player) e.getPlayer();
+        //if(!p.equals((Player)e.getPlayer())) return;
+        queue.remove(e.getView());
+        //p.sendMessage("HELLO");
+        var i = e.getInventory().getContents();
+        //the first item is the result, we already have that
+        Map<Character, ItemStack> map = new HashMap<>();
+        char letter = 'a';
+        //generate map
+        for (var item1 : i) {
+            if (!map.values().contains(item1) && !item1.getType().isAir()) {
+                map.put(letter, item1);
+                letter++;
+            }
+        }
+        //end map
+
+        var path = "plugins/EnderCore/custom-items/"+name;
+            var file = plugin.loadConfig(path.toString(), true);
+            var pattern = convertToPattern(i, map);
+
+            var recipe = new ShapedRecipe(new NamespacedKey(plugin, name), item);
+            recipe.shape(pattern);
+            for(var entry : map.entrySet()) {
+                recipe.setIngredient(entry.getKey(), entry.getValue());
+            }
+            file.set("pattern", pattern);
+            file.set("map", map);
+            file.set("result", item);
+            Bukkit.addRecipe(recipe);
+            COMMANDS2.add(name);
+        try {
+            file.save(new File(path));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+        }
+
+    private String[] convertToPattern(ItemStack[] items, Map<Character, ItemStack> map) {
+        var strings = new String[3];
+        for(int s=0; s <3;s++)
+            strings[s] = "";
+        for(int i =0; i<3; i++) {
+            for(int j=0; j<3; j++) {
+                var item = items[i*3+j+1];
+                if(item.getType() == Material.AIR)
+                    strings[i] += " ";
+                else {
+                     char letter = 'a';
+                     for(var k : map.keySet()) {
+                         if(map.get(k).isSimilar(item)) {
+                             strings[i] += k.toString();
+                             break;
+                         }
+                     }
+                    }
+                }
+            }
+        if(strings[0].equals("   ")) {
+            return Arrays.copyOfRange(strings, 1,3);
+        }
+        else if(strings[2].equals("   ")) {
+            return Arrays.copyOfRange(strings, 0,2);
+        }
+
+        return strings;
     }
 
 
     @Override
-    public boolean onCommand(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
-        //usage /<command> option
-        switch(strings[0]) {
-            case "list":
-                if(strings.length ==1) {
-                    for (String item : plugin.customItems.keySet()) {
-                        commandSender.sendMessage(item);
-                    }
-                    return true;
-                }
-                //do the thing;
-                return true;
-            case "enchant":
-                return enchantItem(commandSender, strings);
-            case "create": {
-                return createItem(commandSender, strings);
-            }
-            case "copy":
-            case "import": {
-                return importItem(commandSender, strings);
-            }
-            case "modify": {
-                CustomItem item = null;
-                //maybe I can alias this to something;
-                if(strings[1].equals("hand")) {
-                    if(!Util.isPlayer(commandSender)) return false;
-                    var p = (Player)commandSender;
-                    return modifyItem(p.getInventory().getItemInMainHand(), strings);
-                }else item = this.plugin.customItems.get(strings[1]);
-                if(item == null) {
-                    commandSender.sendMessage("Item not found");
-                    return false;
-                }
-
-                if(modifyItem(item.itemStack, strings)) {
-                    saveItem(item, true);
-                    return true;
-                }else return false;
-                }
-            case "give": {
-                return giveItem(commandSender, strings);
-            }
-            case "delete":
-                commandSender.sendMessage("You probably shouldn't do this from within Minecraft, please delete the file and reload");
-                break;
-            case "reload":
-                //not implemented
-                commandSender.sendMessage("Not implemented");
-                return false;
-            default:
-                return false;
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
+        //create new array
+        final List<String> completions = new ArrayList<>();
+        if(strings.length ==1) {
+            //copy matches of first argument from list (ex: if first arg is 'm' will return just 'minecraft')
+            StringUtil.copyPartialMatches(strings[0], COMMANDS1, completions);
+            //sort the list
+            Collections.sort(completions);
+        } else if(strings.length ==2) {
+            StringUtil.copyPartialMatches(strings[1], COMMANDS2, completions);
+            //sort the list
+            Collections.sort(completions);
         }
-        return false;
-    }
-
-    private boolean enchantItem(CommandSender commandSender, String[] strings) {
-        if(!Util.isPlayer(commandSender)) return false;
-        var p = (Player)commandSender;
-        var item = p.getInventory().getItemInMainHand();
-        CustomEnchant.enchantItem(item, Enchantment.getByKey(NamespacedKey.fromString(strings[1], plugin)), 1);
-        return true;
-    }
-
-    private boolean giveItem(@NotNull CommandSender commandSender, @NotNull String @NotNull [] strings) {
-        if(strings.length >= 3) {
-            var p = Bukkit.getPlayer(strings[1]);
-            if (p == null) {
-                commandSender.sendMessage("Target must be real player");
-                return false;
-            }
-            var item = this.plugin.customItems.get(strings[2]);
-            if (item == null) {
-                commandSender.sendMessage("Item does not exist");
-                return false;
-            }
-            var is = item.itemStack;
-            if(strings.length ==4) is = item.itemStack.asQuantity(Integer.parseInt(strings[3]));
-            if(!p.getInventory().addItem(is).isEmpty())
-                commandSender.sendMessage("Player's inventory full, item not added");
-
-        }
-        commandSender.sendMessage("Not enough args");
-        return false;
-    }
-
-    private boolean importItem(@NotNull CommandSender commandSender, @NotNull String @NotNull [] strings) {
-        //copy item from command sender inventory
-        if(!Util.isPlayer(commandSender)) return false;
-        var p = (Player) commandSender;
-        var hand = p.getInventory().getItemInMainHand();
-        if(hand.getType().isAir()) {
-            p.sendMessage("You do not have a valid item in your hand");
-            return false;
-        }
-        if(strings.length < 2) {
-            p.sendMessage("You must name the item");
-            //maybe from error sometime;
-            return false;
-        }
-        var item = new CustomItem();
-        item.name = strings[1];
-        item.itemStack = hand;
-        var newPath = this.plugin.customItemPath.resolve(strings[1]);
-        if(!saveItem(item, newPath)) {
-            commandSender.sendMessage("This item already exists");
-            return false;
-        }
-        return true;
-    }
-
-    private boolean createItem(@NotNull CommandSender commandSender, @NotNull String @NotNull [] strings) {
-        //ecustom create name, type, ...
-        var item = new CustomItem();
-        item.name = strings[1];
-        item.itemStack = new ItemStack(Material.DIAMOND_SWORD);
-        item.itemStack.addEnchantment(Enchantment.DAMAGE_ALL, 3);
-        var newPath = this.plugin.customItemPath.resolve(strings[1]);
-        if (!saveItem(item, newPath)) {
-            commandSender.sendMessage("This item already exists");
-            return false;
-        }
-        commandSender.sendMessage(String.format("Successfully created %s", item.name));
-        return true;
-    }
-
-    private boolean saveItem(CustomItem item, java.nio.file.Path newPath) {
-        return saveItem(item, newPath, false);
-    }
-
-    private boolean saveItem(CustomItem item, boolean update) {
-        return saveItem(item, plugin.customItemPath.resolve(item.name), update);
-    }
-
-    private boolean saveItem(CustomItem item, java.nio.file.Path newPath, boolean update) {
-        if(!update) {
-            plugin.customItems.put(item.name, item);
-        }
-        if(Files.exists(newPath) && !update) {
-            return false;
-        }
-        //does this even work?
-        //TODO: Check
-//        new BukkitRunnable() {
-//            @Override
-//            public void run() {
-                //need to make this thread safe. and async
-
-                Gson gson = new Gson();
-
-                try (FileWriter writer = new FileWriter(newPath.toFile())) {
-                    gson.toJson(item.itemStack.getItemMeta(), writer);
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-//            }
-//        }.runTaskAsynchronously(this.plugin);
-
-        return true;
-
-    }
-
-    private boolean modifyItem(ItemStack item, String[] strings) {
-        switch(strings[2]) {
-            case "set":
-                switch(strings[3]) {
-                    case "name":
-                        //ecustom modify test name set
-                        //set the display name = the 5 arg
-                        item.getItemMeta().displayName(Component.text(strings[4]));
-                    case "lore":
-                        //ecustom modify test lore set "This is a lore fragment" <page>
-                            StringBuilder sb = new StringBuilder();
-                            int i = 5;
-                            for (; i < strings.length; i++) {
-                                sb.append(strings[i]);
-                                if (strings[i].endsWith("\"")) break;
-                            }
-
-                        try {
-                            var num = Integer.parseInt(strings[strings.length - 1]);
-                            item.lore().set(num, Component.text(sb.toString()));
-                            return true;
-                        } catch (NumberFormatException e) {
-
-                        }
-                        item.lore(List.of(Component.text(strings[4])));
-                        return true;
-                    case "enchant":
-                        Bukkit.getServer().sendMessage(Component.text("Do not use this"));
-                        return true;
-                }
-            case "add":
-                return false;
-            case "remove":
-        }
-        return true;
+            return completions;
+        //return null;
+        //return COMMANDS;
     }
 }
