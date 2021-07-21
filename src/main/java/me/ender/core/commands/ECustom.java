@@ -56,7 +56,7 @@ public class ECustom extends ECommand implements Listener {
             } break;
             case "recipe": {
                 var name = strings[1];
-                var file = plugin.loadConfig("plugins/EnderCore/custom-items/" + name, false);
+                var file = plugin.loadConfig(plugin.customItemPath + name, false);
                 if(file == null) {
                     p.sendMessage("The specified item does not exist");
                     return false;
@@ -67,7 +67,7 @@ public class ECustom extends ECommand implements Listener {
             } break;
             case "give": {
                 var name = strings[1];
-                var file = plugin.loadConfig("plugins/EnderCore/custom-items/" + name, false);
+                var file = plugin.loadConfig(plugin.customItemPath + name, false);
                 if(file == null) {
                     p.sendMessage("The specified item does not exist");
                     return false;

@@ -100,7 +100,6 @@ public class Core extends JavaPlugin {
             var pattern = new String[patterList.size()];
             patterList.toArray(pattern);
 
-
             var sec = yaml.getConfigurationSection("map");
             Map<String, ItemStack> map = (Map)sec.getValues(false);
 

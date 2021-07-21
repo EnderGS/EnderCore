@@ -1,7 +1,7 @@
 main: me.ender.core.Core
 name: EnderCore
 description: Test
-version: 0.0.2
+version: 0.1.0
 author: EnderGS
 api-version: 1.17
 #softdepend: [ProtocolLib]

@@ -6,7 +6,7 @@
 
     <groupId>me.endergs</groupId>
     <artifactId>core</artifactId>
-    <version>0.0.2</version>
+    <version>0.1.0</version>
     <build>
         <!-- Uses the properties in this file for plugin.yml and config.yml -->
         <resources>
