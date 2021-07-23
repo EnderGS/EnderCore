@@ -15,6 +15,9 @@ commands:
   eenchant:
     description: Custom enchants
     permission: ender.core.eenchant
+  egui:
+    description: Custom item interface
+    permission: ender.core.egui
 permissions:
   ender.core.*:
     description: All
@@ -28,5 +31,12 @@ permissions:
     description: Hello
   ender.core.ecusom:
     description: The goto for custom items
+  ender.core.egui:
+    description: An awesome interface for custom items
+    default: true
+    children:
+      ender.core.egui.admin: false
+  ender.core.egui.admin:
+    description: The ability to access the admin panel
   ender.core.nocooldown:
     description: Avoids cooldown for abilities;

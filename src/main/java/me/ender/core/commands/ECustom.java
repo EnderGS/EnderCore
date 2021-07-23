@@ -29,15 +29,16 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class ECustom extends ECommand implements Listener {
-    private final List<String> COMMANDS1 = List.of("save", "give", "recipe");
-    public Set<String> COMMANDS2;
-    private Map<InventoryView, ItemStack> queue;
-    private final NamespacedKey itemName = new NamespacedKey(plugin, "customName");
+    private final List<String> COMMANDS1 = List.of("save", "give", "recipe", "delete");
+    public List<NamespacedKey> COMMANDS2;
+    public Map<InventoryView, ItemStack> queue;
+    private final NamespacedKey itemName;
     @Inject
     public ECustom(Core plugin) {
         super(plugin, "ecustom");
         queue = new HashMap<>();
-        COMMANDS2 = new HashSet<>();
+        //COMMANDS2 = plugin.CustomItems;
+        itemName = plugin.itemName;
 
     }
     //make it so that you can combine
@@ -103,84 +104,6 @@ public class ECustom extends ECommand implements Listener {
         }
         return true;
     }
-    @EventHandler
-    public void onClose(InventoryCloseEvent e) {
-        var item = queue.get(e.getView()); //this should only trigger for the exact instance of the getView()
-        if (item == null) return;
-        //the name of the custom item is stored in the custom data
-        var name =item.getItemMeta().getPersistentDataContainer().get(itemName, PersistentDataType.STRING);
-        var key = new NamespacedKey(plugin, name);
-        //remove recipe because it is re registering,
-        Bukkit.removeRecipe(key);
-        var p = (Player) e.getPlayer();
-        //if(!p.equals((Player)e.getPlayer())) return;
-        queue.remove(e.getView());
-        //p.sendMessage("HELLO");
-        var i = e.getInventory().getContents();
-        //the first item is the result, we already have that
-        Map<Character, ItemStack> map = new HashMap<>();
-        char letter = 'a';
-        //generate map
-        for (var item1 : i) {
-            if (!map.values().contains(item1) && !item1.getType().isAir()) {
-                map.put(letter, item1);
-                letter++;
-            }
-        }
-        //end map
-
-        var path = "plugins/EnderCore/custom-items/"+name;
-            var file = plugin.loadConfig(path.toString(), true);
-            var pattern = convertToPattern(i, map);
-
-            var recipe = new ShapedRecipe(new NamespacedKey(plugin, name), item);
-            recipe.shape(pattern);
-            for(var entry : map.entrySet()) {
-                recipe.setIngredient(entry.getKey(), entry.getValue());
-            }
-            file.set("pattern", pattern);
-            file.set("map", map);
-            file.set("result", item);
-            Bukkit.addRecipe(recipe);
-            COMMANDS2.add(name);
-        try {
-            file.save(new File(path));
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        }
-        }
-
-    private String[] convertToPattern(ItemStack[] items, Map<Character, ItemStack> map) {
-        var strings = new String[3];
-        for(int s=0; s <3;s++)
-            strings[s] = "";
-        for(int i =0; i<3; i++) {
-            for(int j=0; j<3; j++) {
-                var item = items[i*3+j+1];
-                if(item.getType() == Material.AIR)
-                    strings[i] += " ";
-                else {
-                     char letter = 'a';
-                     for(var k : map.keySet()) {
-                         if(map.get(k).isSimilar(item)) {
-                             strings[i] += k.toString();
-                             break;
-                         }
-                     }
-                    }
-                }
-            }
-        if(strings[0].equals("   ")) {
-            return Arrays.copyOfRange(strings, 1,3);
-        }
-        else if(strings[2].equals("   ")) {
-            return Arrays.copyOfRange(strings, 0,2);
-        }
-
-        return strings;
-    }
-
-
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender commandSender, @NotNull Command command, @NotNull String s, @NotNull String[] strings) {
         //create new array
@@ -191,9 +114,11 @@ public class ECustom extends ECommand implements Listener {
             //sort the list
             Collections.sort(completions);
         } else if(strings.length ==2) {
-            StringUtil.copyPartialMatches(strings[1], COMMANDS2, completions);
+            //todo: if server slows this might be why, maybe cache the things but it probably doesn't matter because i will change this up
+            StringUtil.copyPartialMatches(strings[1], COMMANDS2.stream().map(c-> c.getKey()).toList(), completions);
             //sort the list
             Collections.sort(completions);
+
         }
             return completions;
         //return null;

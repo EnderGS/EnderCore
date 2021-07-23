@@ -7,3 +7,6 @@ abilities:
   vanish:
     cooldown: 600
     length: 30
+items:
+  recipes:
+    include-vanilla: false
